@@ -12,6 +12,11 @@ import pandas as pd
 
 st.set_page_config(page_title="야구 댓글 라벨링 도구", layout="centered")
 st.title("⚾ 야구 댓글 감정 라벨링 도구 ")
+st.markdown("""
+이 도구는 CSV 파일을 업로드한 후, 각 댓글을 긍정(👍) 또는 부정(👎)으로 분류하고  
+그 결과를 저장할 수 있는 간단한 라벨링 인터페이스입니다.  
+✅ 라벨은 1(긍정), 0(부정)으로 저장됩니다.  
+※ 전처리된 `clean_text` 열이 포함된 CSV 파일을 사용해주세요! """)
 
 # 파일 업로드 or 이어서 불러오기
 mode = st.radio("라벨링 모드 선택", ["새로 시작", "이전 파일 이어하기"])
