@@ -16,7 +16,6 @@ st.markdown("""
 이 도구는 CSV 파일을 업로드한 후, 각 댓글을 긍정(👍) 또는 부정(👎)으로 분류하고  
 그 결과를 저장할 수 있는 간단한 라벨링 웹 인터페이스입니다.  
 - 라벨은 `1`: 긍정, `0`: 부정 으로 저장됩니다  
-- 업로드하는 CSV에는 `clean_text` 열이 포함되어 있어야 합니다  
 - **라벨링이 애매한 댓글은 ⏭️ 스킵 버튼으로 넘겨도 괜찮습니다. 저장 시 라벨이 지정된 댓글만 저장됩니다.**
 """)
 
@@ -37,7 +36,7 @@ if uploaded_file:
     remaining_indices = unlabeled.index.tolist()
 
     if st.checkbox("✅ 라벨링된 댓글만 보기"):
-        preview_df = df[df['label'].notna()][['clean_text', 'label']].copy()
+        preview_df = df[df['label'].notna()][['comment', 'label']].copy()
         preview_df['label'] = preview_df['label'].map({1: "긍정", 0: "부정"})
         st.dataframe(preview_df)
     else:
@@ -48,7 +47,7 @@ if uploaded_file:
                 st.session_state.current_idx = idx
 
             st.markdown(f"**{idx+1} / {len(df)} 번째 댓글**")
-            text = df.iloc[idx]['clean_text'] if pd.notna(df.iloc[idx]['clean_text']) else df.iloc[idx]['comment']
+            text = df.iloc[idx]['comment']
             st.text_area("📝 댓글 내용", text, height=100)
 
             col1, col2, col3 = st.columns(3)
