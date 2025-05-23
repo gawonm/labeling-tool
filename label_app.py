@@ -27,8 +27,12 @@ uploaded_file = st.file_uploader("CSV 파일 업로드", type="csv")
 if uploaded_file:
     try:
         df = pd.read_csv(uploaded_file, encoding='utf-8-sig')
-    except UnicodeDecodeError:
-        df = pd.read_csv(uploaded_file, encoding='cp949')
+    except (UnicodeDecodeError, pd.errors.EmptyDataError):
+        try:
+            df = pd.read_csv(uploaded_file, encoding='cp949')
+        except pd.errors.EmptyDataError:
+            st.error("❌ CSV 파일이 비어있거나 인코딩 문제로 읽을 수 없습니다.")
+            st.stop()
 
     if 'label' not in df.columns:
         df['label'] = None
@@ -39,42 +43,35 @@ if uploaded_file:
     else:
         df = st.session_state.df
 
-    unlabeled = df[df['label'].isna()]
-    remaining_indices = unlabeled.index.tolist()
+    idx = st.session_state.current_idx
+    total_rows = len(df)
+
+    st.markdown(f"**{idx+1} / {total_rows} 번째 댓글**")
+
+    text = df.iloc[idx]['comment'] if pd.notna(df.iloc[idx]['comment']) else "(내용 없음)"
+    st.text_area("📝 댓글 내용", text, height=100)
+
+    col1, col2, col3, col4 = st.columns(4)
+    if col1.button("👍 긍정", key=f"pos_{idx}"):
+        df.at[idx, 'label'] = 1
+        st.session_state.current_idx = min(idx + 1, total_rows - 1)
+
+    if col2.button("👎 부정", key=f"neg_{idx}"):
+        df.at[idx, 'label'] = 0
+        st.session_state.current_idx = min(idx + 1, total_rows - 1)
+
+    if col3.button("⏭️ 스킵", key=f"skip_{idx}"):
+        st.session_state.current_idx = min(idx + 1, total_rows - 1)
+
+    if col4.button("⬅️ 뒤로가기", key=f"back_{idx}"):
+        st.session_state.current_idx = max(idx - 1, 0)
+
+    st.progress(df['label'].notna().mean())
 
     if st.checkbox("✅ 라벨링된 댓글만 보기"):
         preview_df = df[df['label'].notna()][['comment', 'label']].copy()
         preview_df['label'] = preview_df['label'].map({1: "긍정", 0: "부정"})
         st.dataframe(preview_df)
-    else:
-        if remaining_indices:
-            idx = st.session_state.current_idx
-            if idx not in remaining_indices:
-                idx = remaining_indices[0]
-                st.session_state.current_idx = idx
-
-            st.markdown(f"**{idx+1} / {len(df)} 번째 댓글**")
-            text = df.iloc[idx]['comment'] if pd.notna(df.iloc[idx]['comment']) else "(내용 없음)"
-            st.text_area("📝 댓글 내용", text, height=100)
-
-            col1, col2, col3, col4 = st.columns(4)
-            if col1.button("👍 긍정", key=f"pos_{idx}"):
-                df.at[idx, 'label'] = 1
-                next_idx = next((i for i in remaining_indices if i > idx), None)
-                st.session_state.current_idx = next_idx if next_idx is not None else idx
-            if col2.button("👎 부정", key=f"neg_{idx}"):
-                df.at[idx, 'label'] = 0
-                next_idx = next((i for i in remaining_indices if i > idx), None)
-                st.session_state.current_idx = next_idx if next_idx is not None else idx
-            if col3.button("⏭️ 스킵", key=f"skip_{idx}"):
-                next_idx = next((i for i in remaining_indices if i > idx), None)
-                st.session_state.current_idx = next_idx if next_idx is not None else idx
-            if col4.button("⬅️ 뒤로가기", key=f"back_{idx}"):
-                st.session_state.current_idx = max(idx - 1, 0)
-        else:
-            st.success("🎉 모든 댓글 라벨링 완료!")
-
-    st.progress(df['label'].notna().mean())
 
     file_name = st.text_input("다운로드할 파일 이름", value="labeled_output.csv")
     labeled_df = df[df['label'].notna()]
