@@ -17,7 +17,8 @@ st.markdown("""
 그 결과를 저장할 수 있는 간단한 라벨링 웹 인터페이스입니다.  
 - 라벨은 `1`: 긍정, `0`: 부정 으로 저장됩니다  
 - 업로드하는 CSV에는 `comment` 열이 포함되어 있어야 합니다  
-- **라벨링이 애매한 댓글은 ⏭️ 스킵 버튼으로 넘겨도 괜찮습니다. 저장 시 라벨이 지정된 댓글만 다운로드됩니다.**
+- **라벨링이 애매한 댓글은 ⏭️ 스킵 버튼으로 넘겨도 괜찮습니다. 저장 시 라벨이 지정된 댓글만 다운로드됩니다.**  
+- **잘못 선택한 경우 ⏪ 뒤로가기 버튼을 눌러 라벨을 되돌릴 수 있습니다.**
 """)
 
 mode = st.radio("라벨링 모드 선택", ["새로 시작", "이전 파일 이어하기"])
@@ -51,7 +52,7 @@ if uploaded_file:
             text = df.iloc[idx]['comment'] if pd.notna(df.iloc[idx]['comment']) else "(내용 없음)"
             st.text_area("📝 댓글 내용", text, height=100)
 
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
             if col1.button("👍 긍정", key=f"pos_{idx}"):
                 df.at[idx, 'label'] = 1
                 next_idx = next((i for i in remaining_indices if i > idx), None)
@@ -63,6 +64,9 @@ if uploaded_file:
             if col3.button("⏭️ 스킵", key=f"skip_{idx}"):
                 next_idx = next((i for i in remaining_indices if i > idx), None)
                 st.session_state.current_idx = next_idx if next_idx is not None else idx
+            if col4.button("⏪ 뒤로가기", key=f"reset_{idx}"):
+                df.at[idx, 'label'] = None
+                st.warning("❗ 해당 댓글 라벨을 다시 달아주세요.")
         else:
             st.success("🎉 모든 댓글 라벨링 완료!")
 
