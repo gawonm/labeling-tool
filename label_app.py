@@ -9,6 +9,9 @@ Original file is located at
 import streamlit as st
 import pandas as pd
 
+import streamlit as st
+import pandas as pd
+
 st.set_page_config(page_title="야구 댓글 라벨링 도구", layout="centered")
 st.title("⚾ 야구 댓글 감정 라벨링 도구")
 
