@@ -18,17 +18,22 @@ st.markdown("""
 - 라벨은 `1`: 긍정, `0`: 부정 으로 저장됩니다  
 - 업로드하는 CSV에는 `comment` 열이 포함되어 있어야 합니다  
 - **라벨링이 애매한 댓글은 ⏭️ 스킵 버튼으로 넘겨도 괜찮습니다. 저장 시 라벨이 지정된 댓글만 다운로드됩니다.**  
-- **잘못 선택한 경우 ⏪ 뒤로가기 버튼을 눌러 라벨을 되돌릴 수 있습니다.**
+- **이전 댓글로 돌아가고 싶을 땐 ⬅️ 뒤로가기 버튼을 누르세요.**
 """)
 
 mode = st.radio("라벨링 모드 선택", ["새로 시작", "이전 파일 이어하기"])
 uploaded_file = st.file_uploader("CSV 파일 업로드", type="csv")
 
 if uploaded_file:
+    try:
+        df = pd.read_csv(uploaded_file, encoding='utf-8-sig')
+    except UnicodeDecodeError:
+        df = pd.read_csv(uploaded_file, encoding='cp949')
+
+    if 'label' not in df.columns:
+        df['label'] = None
+
     if 'df' not in st.session_state:
-        df = pd.read_csv(uploaded_file)
-        if 'label' not in df.columns:
-            df['label'] = None
         st.session_state.df = df
         st.session_state.current_idx = 0
     else:
@@ -64,9 +69,8 @@ if uploaded_file:
             if col3.button("⏭️ 스킵", key=f"skip_{idx}"):
                 next_idx = next((i for i in remaining_indices if i > idx), None)
                 st.session_state.current_idx = next_idx if next_idx is not None else idx
-            if col4.button("⏪ 뒤로가기", key=f"reset_{idx}"):
-                df.at[idx, 'label'] = None
-                st.warning("❗ 해당 댓글 라벨을 다시 달아주세요.")
+            if col4.button("⬅️ 뒤로가기", key=f"back_{idx}"):
+                st.session_state.current_idx = max(idx - 1, 0)
         else:
             st.success("🎉 모든 댓글 라벨링 완료!")
 
