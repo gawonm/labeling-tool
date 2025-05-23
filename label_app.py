@@ -16,7 +16,8 @@ st.markdown("""
 이 도구는 CSV 파일을 업로드한 후, 각 댓글을 긍정(👍) 또는 부정(👎)으로 분류하고  
 그 결과를 저장할 수 있는 간단한 라벨링 웹 인터페이스입니다.  
 - 라벨은 `1`: 긍정, `0`: 부정 으로 저장됩니다  
-- **라벨링이 애매한 댓글은 ⏭️ 스킵 버튼으로 넘겨도 괜찮습니다. 저장 시 라벨이 지정된 댓글만 저장됩니다.**
+- 업로드하는 CSV에는 `comment` 열이 포함되어 있어야 합니다  
+- **라벨링이 애매한 댓글은 ⏭️ 스킵 버튼으로 넘겨도 괜찮습니다. 저장 시 라벨이 지정된 댓글만 다운로드됩니다.**
 """)
 
 mode = st.radio("라벨링 모드 선택", ["새로 시작", "이전 파일 이어하기"])
@@ -47,7 +48,7 @@ if uploaded_file:
                 st.session_state.current_idx = idx
 
             st.markdown(f"**{idx+1} / {len(df)} 번째 댓글**")
-            text = df.iloc[idx]['comment']
+            text = df.iloc[idx]['comment'] if pd.notna(df.iloc[idx]['comment']) else "(내용 없음)"
             st.text_area("📝 댓글 내용", text, height=100)
 
             col1, col2, col3 = st.columns(3)
@@ -67,8 +68,13 @@ if uploaded_file:
 
     st.progress(df['label'].notna().mean())
 
-    file_name = st.text_input("저장 파일 이름", value="labeled_output.csv")
-    if st.button("💾 저장"):
-        labeled_df = df[df['label'].notna()]
-        labeled_df.to_csv(file_name, index=False, encoding='utf-8-sig')
-        st.success(f"✅ {file_name} 저장 완료! (라벨링 된 댓글 {len(labeled_df)}개)")
+    file_name = st.text_input("다운로드할 파일 이름", value="labeled_output.csv")
+    labeled_df = df[df['label'].notna()]
+    csv = labeled_df.to_csv(index=False, encoding='utf-8-sig')
+
+    st.download_button(
+        label="📥 라벨링된 CSV 다운로드",
+        data=csv,
+        file_name=file_name,
+        mime='text/csv'
+    )
