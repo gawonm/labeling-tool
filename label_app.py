@@ -79,11 +79,24 @@ if uploaded_file:
 
     file_name = st.text_input("다운로드할 파일 이름", value="labeled_output.csv")
     labeled_df = df[df['label'].notna()]
-    csv = labeled_df.to_csv(index=False, encoding='utf-8-sig')
+    labeled_csv = labeled_df.to_csv(index=False, encoding='utf-8-sig')
+    full_csv = df.to_csv(index=False, encoding='utf-8-sig')
 
-    st.download_button(
-        label="📥 라벨링된 CSV 다운로드",
-        data=csv,
-        file_name=file_name,
-        mime='text/csv'
-    )
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.download_button(
+            label="📥 라벨된 댓글만 저장",
+            data=labeled_csv,
+            file_name="labeled_output.csv",
+            mime='text/csv'
+        )
+
+    with col2:
+        st.download_button(
+                label="📥 전체 파일 저장 (이어쓰기용)",
+                data=full_csv,
+                file_name="full_output.csv",
+                mime='text/csv'
+            )
+
