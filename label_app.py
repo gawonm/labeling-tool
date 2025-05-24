@@ -42,7 +42,8 @@ if uploaded_file:
 
     if 'df' not in st.session_state:
         st.session_state.df = df
-        st.session_state.current_idx = 0
+        unlabeled_indices = df[df['label'].isna()].index
+        st.session_state.current_idx = unlabeled_indices[0] if not unlabeled_indices.empty else 0
     else:
         df = st.session_state.df
 
